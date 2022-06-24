@@ -1,0 +1,46 @@
+import "@fluencelabs/aqua-lib/builtin.aqua"
+data Account:
+    id: string
+    username: string
+    public_key: string
+
+data SignResult:
+    success: bool
+    error: ?string
+    signature: ?[]u8
+
+data EncryptionResult:
+    success: bool
+    error: ?string
+    content: ?[]u8
+
+data DecryptionResult:
+    success: bool
+    error: ?string
+    content: ?[]u8
+
+service Auth("custom_sig"):
+    -- set_username(username: string)
+    -- get_username() -> string
+    -- get_account_name() -> Account
+    create(username: string) -> bool
+    sign(data: []u8) -> SignResult
+
+    verify(signature: []u8, data: []u8) -> bool
+
+    get_pub_key() -> string
+
+    -- encrypt(data: []u8, public_key: string) -> EncryptionResult
+
+    -- decrypt(data: []u8) -> DecryptionResult
+
+    receive_handshake(prologue: []u8) -> []u8
+    send_handshake(peer: PeerId, public_key: string) -> []u8
+
+func handshake(peer: PeerId):
+    on peer:
+        public_key <- Auth.get_pub_key()
+    prologue <- Auth.send_handshake(peer, public_key)
+    on peer:
+        reply <- Auth.receive_handshake(prologue) 
+    Auth.receive_handshake(reply)

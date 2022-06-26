@@ -17,10 +17,13 @@ import {
 // Services
 
 export interface AuthDef {
-    create: (username: string, callParams: CallParams<'username'>) => boolean | Promise<boolean>;
-    get_pub_key: (callParams: CallParams<null>) => string | Promise<string>;
-    receive_handshake: (prologue: number[], callParams: CallParams<'prologue'>) => number[] | Promise<number[]>;
-    send_handshake: (peer: string, public_key: string, callParams: CallParams<'peer' | 'public_key'>) => number[] | Promise<number[]>;
+    create: (username: string, callParams: CallParams<'username'>) => { deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
+    decrypt: (data: number[], from: string, callParams: CallParams<'data' | 'from'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
+    encrypt: (data: number[], id: string, callParams: CallParams<'data' | 'id'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
+    get_account_name: (callParams: CallParams<null>) => string | Promise<string>;
+    get_identity: (callParams: CallParams<null>) => { deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
+    get_username: (callParams: CallParams<null>) => string | Promise<string>;
+    set_username: (username: string, callParams: CallParams<'username'>) => void | Promise<void>;
     sign: (data: number[], callParams: CallParams<'data'>) => { error: string | null; signature: number[] | null; success: boolean; } | Promise<{ error: string | null; signature: number[] | null; success: boolean; }>;
     verify: (signature: number[], data: number[], callParams: CallParams<'signature' | 'data'>) => boolean | Promise<boolean>;
 }
@@ -34,7 +37,7 @@ export function registerAuth(...args: any) {
     registerService(
         args,
         {
-    "defaultServiceId" : "custom_sig",
+    "defaultServiceId" : "auth",
     "functions" : {
         "tag" : "labeledProduct",
         "fields" : {
@@ -53,13 +56,172 @@ export function registerAuth(...args: any) {
                     "tag" : "unlabeledProduct",
                     "items" : [
                         {
-                            "tag" : "scalar",
-                            "name" : "bool"
+                            "tag" : "struct",
+                            "name" : "Identity",
+                            "fields" : {
+                                "preKeyPublic" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "username" : {
+                                    "tag" : "scalar",
+                                    "name" : "string"
+                                },
+                                "registrationId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "identityKey" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "signedPreKeyId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "deviceId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "preKeyId" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "id" : {
+                                    "tag" : "scalar",
+                                    "name" : "string"
+                                },
+                                "signedPreKeyPublic" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "signedPreKeySignature" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                }
+                            }
                         }
                     ]
                 }
             },
-            "get_pub_key" : {
+            "decrypt" : {
+                "tag" : "arrow",
+                "domain" : {
+                    "tag" : "labeledProduct",
+                    "fields" : {
+                        "data" : {
+                            "tag" : "array",
+                            "type" : {
+                                "tag" : "scalar",
+                                "name" : "u8"
+                            }
+                        },
+                        "from" : {
+                            "tag" : "scalar",
+                            "name" : "string"
+                        }
+                    }
+                },
+                "codomain" : {
+                    "tag" : "unlabeledProduct",
+                    "items" : [
+                        {
+                            "tag" : "struct",
+                            "name" : "DecryptionResult",
+                            "fields" : {
+                                "content" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "array",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    }
+                                },
+                                "error" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    }
+                                },
+                                "success" : {
+                                    "tag" : "scalar",
+                                    "name" : "bool"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "encrypt" : {
+                "tag" : "arrow",
+                "domain" : {
+                    "tag" : "labeledProduct",
+                    "fields" : {
+                        "data" : {
+                            "tag" : "array",
+                            "type" : {
+                                "tag" : "scalar",
+                                "name" : "u8"
+                            }
+                        },
+                        "id" : {
+                            "tag" : "scalar",
+                            "name" : "string"
+                        }
+                    }
+                },
+                "codomain" : {
+                    "tag" : "unlabeledProduct",
+                    "items" : [
+                        {
+                            "tag" : "struct",
+                            "name" : "EncryptionResult",
+                            "fields" : {
+                                "content" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "array",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    }
+                                },
+                                "error" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    }
+                                },
+                                "success" : {
+                                    "tag" : "scalar",
+                                    "name" : "bool"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "get_account_name" : {
                 "tag" : "arrow",
                 "domain" : {
                     "tag" : "nil"
@@ -74,59 +236,106 @@ export function registerAuth(...args: any) {
                     ]
                 }
             },
-            "receive_handshake" : {
+            "get_identity" : {
                 "tag" : "arrow",
                 "domain" : {
-                    "tag" : "labeledProduct",
-                    "fields" : {
-                        "prologue" : {
-                            "tag" : "array",
-                            "type" : {
-                                "tag" : "scalar",
-                                "name" : "u8"
-                            }
-                        }
-                    }
+                    "tag" : "nil"
                 },
                 "codomain" : {
                     "tag" : "unlabeledProduct",
                     "items" : [
                         {
-                            "tag" : "array",
-                            "type" : {
-                                "tag" : "scalar",
-                                "name" : "u8"
+                            "tag" : "struct",
+                            "name" : "Identity",
+                            "fields" : {
+                                "preKeyPublic" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "username" : {
+                                    "tag" : "scalar",
+                                    "name" : "string"
+                                },
+                                "registrationId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "identityKey" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "signedPreKeyId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "deviceId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "preKeyId" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "id" : {
+                                    "tag" : "scalar",
+                                    "name" : "string"
+                                },
+                                "signedPreKeyPublic" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "signedPreKeySignature" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                }
                             }
                         }
                     ]
                 }
             },
-            "send_handshake" : {
+            "get_username" : {
+                "tag" : "arrow",
+                "domain" : {
+                    "tag" : "nil"
+                },
+                "codomain" : {
+                    "tag" : "unlabeledProduct",
+                    "items" : [
+                        {
+                            "tag" : "scalar",
+                            "name" : "string"
+                        }
+                    ]
+                }
+            },
+            "set_username" : {
                 "tag" : "arrow",
                 "domain" : {
                     "tag" : "labeledProduct",
                     "fields" : {
-                        "peer" : {
-                            "tag" : "scalar",
-                            "name" : "string"
-                        },
-                        "public_key" : {
+                        "username" : {
                             "tag" : "scalar",
                             "name" : "string"
                         }
                     }
                 },
                 "codomain" : {
-                    "tag" : "unlabeledProduct",
-                    "items" : [
-                        {
-                            "tag" : "array",
-                            "type" : {
-                                "tag" : "scalar",
-                                "name" : "u8"
-                            }
-                        }
-                    ]
+                    "tag" : "nil"
                 }
             },
             "sign" : {
@@ -214,95 +423,4 @@ export function registerAuth(...args: any) {
 }
       
 // Functions
- 
 
-export function handshake(
-    peer_: string,
-    config?: {ttl?: number}
-): Promise<void>;
-
-export function handshake(
-    peer: FluencePeer,
-    peer_: string,
-    config?: {ttl?: number}
-): Promise<void>;
-
-export function handshake(...args: any) {
-
-    let script = `
-                    (xor
-                     (seq
-                      (seq
-                       (seq
-                        (seq
-                         (seq
-                          (seq
-                           (seq
-                            (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-                            (call %init_peer_id% ("getDataSrv" "peer") [] peer)
-                           )
-                           (call -relay- ("op" "noop") [])
-                          )
-                          (xor
-                           (seq
-                            (call peer ("custom_sig" "get_pub_key") [] public_key)
-                            (call -relay- ("op" "noop") [])
-                           )
-                           (seq
-                            (call -relay- ("op" "noop") [])
-                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
-                           )
-                          )
-                         )
-                         (call %init_peer_id% ("custom_sig" "send_handshake") [peer public_key] prologue)
-                        )
-                        (call -relay- ("op" "noop") [])
-                       )
-                       (xor
-                        (seq
-                         (call peer ("custom_sig" "receive_handshake") [prologue] reply)
-                         (call -relay- ("op" "noop") [])
-                        )
-                        (seq
-                         (call -relay- ("op" "noop") [])
-                         (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
-                        )
-                       )
-                      )
-                      (call %init_peer_id% ("custom_sig" "receive_handshake") [reply])
-                     )
-                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
-                    )
-    `
-    return callFunction(
-        args,
-        {
-    "functionName" : "handshake",
-    "arrow" : {
-        "tag" : "arrow",
-        "domain" : {
-            "tag" : "labeledProduct",
-            "fields" : {
-                "peer" : {
-                    "tag" : "scalar",
-                    "name" : "string"
-                }
-            }
-        },
-        "codomain" : {
-            "tag" : "nil"
-        }
-    },
-    "names" : {
-        "relay" : "-relay-",
-        "getDataSrv" : "getDataSrv",
-        "callbackSrv" : "callbackSrv",
-        "responseSrv" : "callbackSrv",
-        "responseFnName" : "response",
-        "errorHandlingSrv" : "errorHandlingSrv",
-        "errorFnName" : "error"
-    }
-},
-        script
-    )
-}

@@ -1,8 +1,18 @@
 import "@fluencelabs/aqua-lib/builtin.aqua"
-data Account:
+
+alias Buffer: []u8 
+
+data Identity:
     id: string
     username: string
-    public_key: string
+    deviceId: u8
+    identityKey: []u8
+    preKeyId: ?u8
+    preKeyPublic: []u8 
+    registrationId: u8 
+    signedPreKeyId: u8 
+    signedPreKeyPublic: []u8 
+    signedPreKeySignature: []u8 
 
 data SignResult:
     success: bool
@@ -19,28 +29,18 @@ data DecryptionResult:
     error: ?string
     content: ?[]u8
 
-service Auth("custom_sig"):
-    -- set_username(username: string)
-    -- get_username() -> string
-    -- get_account_name() -> Account
-    create(username: string) -> bool
-    sign(data: []u8) -> SignResult
+service Auth("auth"):
+    set_username(username: string)
+    get_username() -> string
+    get_account_name() -> string
 
-    verify(signature: []u8, data: []u8) -> bool
+    create(username: string) -> Identity 
 
-    get_pub_key() -> string
+    sign(data: Buffer) -> SignResult
+    verify(signature: Buffer, data: Buffer) -> bool
 
-    -- encrypt(data: []u8, public_key: string) -> EncryptionResult
+    get_identity() -> Identity
 
-    -- decrypt(data: []u8) -> DecryptionResult
+    encrypt(data: Buffer, id: string) -> EncryptionResult
 
-    receive_handshake(prologue: []u8) -> []u8
-    send_handshake(peer: PeerId, public_key: string) -> []u8
-
-func handshake(peer: PeerId):
-    on peer:
-        public_key <- Auth.get_pub_key()
-    prologue <- Auth.send_handshake(peer, public_key)
-    on peer:
-        reply <- Auth.receive_handshake(prologue) 
-    Auth.receive_handshake(reply)
+    decrypt(data: Buffer, from: string) -> DecryptionResult

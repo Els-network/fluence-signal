@@ -13,6 +13,7 @@ data Identity:
     signedPreKeyId: u8 
     signedPreKeyPublic: []u8 
     signedPreKeySignature: []u8 
+    address: string
 
 data SignResult:
     success: bool
@@ -29,7 +30,7 @@ data DecryptionResult:
     error: ?string
     content: ?[]u8
 
-service Auth("auth"):
+service Signal("signal"):
     set_username(username: string)
     get_username() -> string
     get_account_name() -> string

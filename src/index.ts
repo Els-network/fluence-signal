@@ -1,4 +1,5 @@
-import { Auth } from './auth';
-import { registerAuth } from './_aqua/auth';
+import { SignalService } from './signalService';
+import { registerSignal } from './_aqua/signal';
+import { IdentityKeyStore, PreKeyStore, SenderKeyStore, SessionStore, SignedPreKeyStore } from "@signalapp/libsignal-client";
 
-export { registerAuth, Auth};
+export { registerSignal, SignalService, SessionStore, IdentityKeyStore, PreKeyStore, SignedPreKeyStore, SenderKeyStore };

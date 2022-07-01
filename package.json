@@ -11,10 +11,8 @@
     "@fluencelabs/fluence": "^0.23.0",
     "@fluencelabs/fluence-network-environment": "^1.0.13",
     "@signalapp/libsignal-client": "^0.18.0",
-    "@signalapp/signal-client": "^0.14.0",
     "await-handler": "https://github.com/Els-network/await-handler-ts",
-    "noise-curve-ed": "^1.0.4",
-    "noise-handshake": "^2.2.0"
+    "nanoid": "^4.0.0"
   },
   "devDependencies": {
     "@fluencelabs/aqua": "^0.7.3-318",

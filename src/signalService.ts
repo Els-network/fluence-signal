@@ -1,12 +1,12 @@
 import { CallParams, FluencePeer } from '@fluencelabs/fluence';
 import { Signal, Stores } from './signal';
-import { AuthDef } from './_aqua/auth';
 import on from "await-handler";
 
-function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
-    return callParams.initPeerId === peer.getStatus().peerId;
-}
-export class Auth implements AuthDef {
+import { ProtocolAddress } from '@signalapp/libsignal-client';
+import { nanoid } from "nanoid";
+import { SignalDef } from './_aqua/signal';
+
+export class SignalService implements SignalDef {
 
     public currentUser: Signal | undefined;
     public currentUsername: string | undefined;
@@ -27,7 +27,7 @@ export class Auth implements AuthDef {
         return this.currentUsername!;
     };
     
-    get_identity(callParams: CallParams<null>): { deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } {
+    get_identity(callParams: CallParams<null>): { address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } {
         return {
             registrationId: this.currentUser!.bundle.registrationId(),
             identityKey: Array.from(this.currentUser!.bundle.identityKey().serialize()),
@@ -38,23 +38,22 @@ export class Auth implements AuthDef {
             signedPreKeyPublic: Array.from(this.currentUser!.bundle.signedPreKeyPublic().serialize()),
             signedPreKeySignature: Array.from(this.currentUser!.bundle.signedPreKeySignature()),
             username: this.currentUsername!,
-            id: this.currentId!
+            id: this.currentId!,
+            address: ProtocolAddresToString(this.currentUser!.address),
         } 
     };
 
-    private stores: Stores | undefined;
     constructor(peer: FluencePeer, stores?: Stores) {
         this.peer = peer;
-        this.stores = stores
+        if(stores) Signal.setStore(stores);
     }
 
-    async create(username: string, callParams: CallParams<'username'>): Promise<{ deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }> {
+    async create(username: string, callParams: CallParams<'username'>): Promise<{ address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not owner");
-        if(this.stores) Signal.setStore(this.stores)
         const identity = await Signal.create(username, 1);
         this.currentUser = identity;
         this.currentUsername = username;
-        this.currentId = "fds";
+        this.currentId = nanoid();
         return {
             registrationId: this.currentUser.bundle.registrationId(),
             identityKey: Array.from(this.currentUser.bundle.identityKey().serialize()),
@@ -65,13 +64,14 @@ export class Auth implements AuthDef {
             signedPreKeyPublic: Array.from(this.currentUser.bundle.signedPreKeyPublic().serialize()),
             signedPreKeySignature: Array.from(this.currentUser.bundle.signedPreKeySignature()),
             username: this.currentUsername,
-            id: this.currentId
+            id: this.currentId,
+            address: this.currentUsername + "::" + this.currentId
         } 
     }
 
     async sign(data: number[], callParams: CallParams<'data'>): Promise<{ error: string | null; signature: number[] | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.currentUser!.sign(data.toString()));
+        const [err, result] = await on(this.currentUser!.sign(Buffer.from(data)));
         return {
             error: err ? err.toLocaleString() : err,
             signature: result ? Array.from(result) : [],
@@ -86,7 +86,7 @@ export class Auth implements AuthDef {
     
     async decrypt(data: number[], from: string, callParams: CallParams<'data' | 'from'>):  Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.currentUser!.receive(data, from))
+        const [err, result] = await on(this.currentUser!.receive(Buffer.from(data), StringToProtocolAddress(from)));
         return {
             content: result ? Array.from(result): [],
             error: err ? err.toString() : "",
@@ -96,7 +96,7 @@ export class Auth implements AuthDef {
 
     async encrypt(data: number[], id: string, callParams: CallParams<'data' | 'id'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.currentUser!.send(data, id));
+        const [err, result] = await on(this.currentUser!.send(Buffer.from(data), StringToProtocolAddress(id)));
         return {
             content: result ? Array.from(result): [],
             error: err ? err.toString() : "",
@@ -104,4 +104,17 @@ export class Auth implements AuthDef {
         }
 
     };
+}
+
+function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
+    return callParams.initPeerId === peer.getStatus().peerId;
+}
+
+function ProtocolAddresToString(address: ProtocolAddress) {
+    return `${address.name()}::${address.deviceId()}`
+}
+
+function StringToProtocolAddress(string: string) {
+    const args = string.split("::");
+    return ProtocolAddress.new(args[0], Number(args[1]));
 }

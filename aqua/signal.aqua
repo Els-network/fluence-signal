@@ -1,5 +1,7 @@
 import "@fluencelabs/aqua-lib/builtin.aqua"
 
+export Address, Identity, SignResult, EncryptionResult, DecryptionResult, Signal
+
 alias Buffer: []u8 
 alias Address: string
 

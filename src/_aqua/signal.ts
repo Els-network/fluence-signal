@@ -17,15 +17,15 @@ import {
 // Services
 
 export interface SignalDef {
-    create: (username: string, callParams: CallParams<'username'>) => { address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
+    create: (username: string, callParams: CallParams<'username'>) => { address: string[]; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ address: string[]; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
     decrypt: (data: number[], from: string, callParams: CallParams<'data' | 'from'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
     encrypt: (data: number[], id: string, callParams: CallParams<'data' | 'id'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
-    get_account_name: (callParams: CallParams<null>) => string | Promise<string>;
-    get_identity: (callParams: CallParams<null>) => { address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
+    get_identity: (callParams: CallParams<null>) => { address: string[]; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ address: string[]; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
     get_username: (callParams: CallParams<null>) => string | Promise<string>;
     set_username: (username: string, callParams: CallParams<'username'>) => void | Promise<void>;
     sign: (data: number[], callParams: CallParams<'data'>) => { error: string | null; signature: number[] | null; success: boolean; } | Promise<{ error: string | null; signature: number[] | null; success: boolean; }>;
     verify: (signature: number[], data: number[], callParams: CallParams<'signature' | 'data'>) => boolean | Promise<boolean>;
+    verifyFor: (signature: number[], data: number[], address: string, callParams: CallParams<'signature' | 'data' | 'address'>) => boolean | Promise<boolean>;
 }
 export function registerSignal(service: SignalDef): void;
 export function registerSignal(serviceId: string, service: SignalDef): void;
@@ -81,18 +81,6 @@ export function registerSignal(...args: any) {
                                         "name" : "u8"
                                     }
                                 },
-                                "address" : {
-                                    "tag" : "scalar",
-                                    "name" : "string"
-                                },
-                                "signedPreKeyId" : {
-                                    "tag" : "scalar",
-                                    "name" : "u8"
-                                },
-                                "deviceId" : {
-                                    "tag" : "scalar",
-                                    "name" : "u8"
-                                },
                                 "preKeyId" : {
                                     "tag" : "option",
                                     "type" : {
@@ -100,9 +88,16 @@ export function registerSignal(...args: any) {
                                         "name" : "u8"
                                     }
                                 },
-                                "id" : {
+                                "address" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    }
+                                },
+                                "signedPreKeyId" : {
                                     "tag" : "scalar",
-                                    "name" : "string"
+                                    "name" : "u8"
                                 },
                                 "signedPreKeyPublic" : {
                                     "tag" : "array",
@@ -225,21 +220,6 @@ export function registerSignal(...args: any) {
                     ]
                 }
             },
-            "get_account_name" : {
-                "tag" : "arrow",
-                "domain" : {
-                    "tag" : "nil"
-                },
-                "codomain" : {
-                    "tag" : "unlabeledProduct",
-                    "items" : [
-                        {
-                            "tag" : "scalar",
-                            "name" : "string"
-                        }
-                    ]
-                }
-            },
             "get_identity" : {
                 "tag" : "arrow",
                 "domain" : {
@@ -274,18 +254,6 @@ export function registerSignal(...args: any) {
                                         "name" : "u8"
                                     }
                                 },
-                                "address" : {
-                                    "tag" : "scalar",
-                                    "name" : "string"
-                                },
-                                "signedPreKeyId" : {
-                                    "tag" : "scalar",
-                                    "name" : "u8"
-                                },
-                                "deviceId" : {
-                                    "tag" : "scalar",
-                                    "name" : "u8"
-                                },
                                 "preKeyId" : {
                                     "tag" : "option",
                                     "type" : {
@@ -293,9 +261,16 @@ export function registerSignal(...args: any) {
                                         "name" : "u8"
                                     }
                                 },
-                                "id" : {
+                                "address" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    }
+                                },
+                                "signedPreKeyId" : {
                                     "tag" : "scalar",
-                                    "name" : "string"
+                                    "name" : "u8"
                                 },
                                 "signedPreKeyPublic" : {
                                     "tag" : "array",
@@ -411,6 +386,41 @@ export function registerSignal(...args: any) {
                                 "tag" : "scalar",
                                 "name" : "u8"
                             }
+                        }
+                    }
+                },
+                "codomain" : {
+                    "tag" : "unlabeledProduct",
+                    "items" : [
+                        {
+                            "tag" : "scalar",
+                            "name" : "bool"
+                        }
+                    ]
+                }
+            },
+            "verifyFor" : {
+                "tag" : "arrow",
+                "domain" : {
+                    "tag" : "labeledProduct",
+                    "fields" : {
+                        "signature" : {
+                            "tag" : "array",
+                            "type" : {
+                                "tag" : "scalar",
+                                "name" : "u8"
+                            }
+                        },
+                        "data" : {
+                            "tag" : "array",
+                            "type" : {
+                                "tag" : "scalar",
+                                "name" : "u8"
+                            }
+                        },
+                        "address" : {
+                            "tag" : "scalar",
+                            "name" : "string"
                         }
                     }
                 },

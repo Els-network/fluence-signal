@@ -1,77 +1,79 @@
 import { CallParams, FluencePeer } from '@fluencelabs/fluence';
+import { SignalDef } from './_aqua/signal';
 import { Signal, Stores } from './signal';
 import on from "await-handler";
 
-import { ProtocolAddress } from '@signalapp/libsignal-client';
-import { nanoid } from "nanoid";
-import { SignalDef } from './_aqua/signal';
+import { hash, PeerIdToNumber, ProtocolAddressToString, StringToProtocolAddress } from './util';
 
+function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
+    return callParams.initPeerId === peer.getStatus().peerId;
+}
+
+/**
+ * Service that enable Signal Client for encryption and decryption; 
+ */
 export class SignalService implements SignalDef {
 
-    public currentUser: Signal | undefined;
-    public currentUsername: string | undefined;
-    public currentId: string | undefined;
+    public user: Signal | undefined;
+    public username: string | undefined;
+    public id: string | undefined; 
     
     public peer: FluencePeer;
 
     async get_username(callParams: CallParams<null>): Promise<string> {
-        return this.currentUsername!
+        return this.username!
     };
     
     set_username(username: string, callParams: CallParams<'username'>): void | Promise<void> {
         if(onlyOwner(this.peer, callParams))
-            this.currentUsername = username;
-    };
-
-    get_account_name(callParams: CallParams<null>): string | Promise<string> {
-        return this.currentUsername!;
+            this.username = username;
     };
     
-    get_identity(callParams: CallParams<null>): { address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } {
+    get_identity(callParams: CallParams<null>) {
         return {
-            registrationId: this.currentUser!.bundle.registrationId(),
-            identityKey: Array.from(this.currentUser!.bundle.identityKey().serialize()),
-            preKeyId: this.currentUser!.bundle.preKeyId(),
-            signedPreKeyId: this.currentUser!.bundle.signedPreKeyId(),
-            deviceId: this.currentUser!.bundle.deviceId(),
-            preKeyPublic: Array.from(this.currentUser!.bundle.preKeyPublic()!.serialize()),
-            signedPreKeyPublic: Array.from(this.currentUser!.bundle.signedPreKeyPublic().serialize()),
-            signedPreKeySignature: Array.from(this.currentUser!.bundle.signedPreKeySignature()),
-            username: this.currentUsername!,
-            id: this.currentId!,
-            address: ProtocolAddresToString(this.currentUser!.address),
+            id: this.id!,
+            address: [ProtocolAddressToString(this.user!.address)],
+            username: this.username!,
+            deviceId: this.user!.bundle.deviceId(),
+            registrationId: this.user!.bundle.registrationId(),
+            identityKey: Array.from(this.user!.bundle.identityKey().serialize()),
+            preKeyId: this.user!.bundle.preKeyId(),
+            signedPreKeyId: this.user!.bundle.signedPreKeyId(),
+            preKeyPublic: Array.from(this.user!.bundle.preKeyPublic()!.serialize()),
+            signedPreKeyPublic: Array.from(this.user!.bundle.signedPreKeyPublic().serialize()),
+            signedPreKeySignature: Array.from(this.user!.bundle.signedPreKeySignature()),
         } 
     };
 
-    constructor(peer: FluencePeer, stores?: Stores) {
+    constructor(peer: FluencePeer, devices?: string[], stores?: Stores) {
         this.peer = peer;
         if(stores) Signal.setStore(stores);
     }
 
-    async create(username: string, callParams: CallParams<'username'>): Promise<{ address: string; deviceId: number; id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }> {
+    async create(username: string, callParams: CallParams<'username'>) {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not owner");
-        const identity = await Signal.create(username, 1);
-        this.currentUser = identity;
-        this.currentUsername = username;
-        this.currentId = nanoid();
+        this.username = username;
+        const identity = await Signal.create(PeerIdToNumber(this.peer.getStatus().peerId!));
+        this.id = hash(await (await identity.keys.getIdentityKey()!).serialize().toString());
+        this.user = identity;
         return {
-            registrationId: this.currentUser.bundle.registrationId(),
-            identityKey: Array.from(this.currentUser.bundle.identityKey().serialize()),
-            preKeyId: this.currentUser.bundle.preKeyId(),
-            signedPreKeyId: this.currentUser.bundle.signedPreKeyId(),
-            deviceId: this.currentUser.bundle.deviceId(),
-            preKeyPublic: Array.from(this.currentUser.bundle.preKeyPublic()!.serialize()),
-            signedPreKeyPublic: Array.from(this.currentUser.bundle.signedPreKeyPublic().serialize()),
-            signedPreKeySignature: Array.from(this.currentUser.bundle.signedPreKeySignature()),
-            username: this.currentUsername,
-            id: this.currentId,
-            address: this.currentUsername + "::" + this.currentId
+            id: this.id,
+            username: this.username,
+            address: [ProtocolAddressToString(this.user.address)],
+            deviceId: this.user.bundle.deviceId(),
+            identityKey: Array.from(this.user.bundle.identityKey().serialize()),
+            registrationId: this.user.bundle.registrationId(),
+            preKeyId: this.user.bundle.preKeyId(),
+            signedPreKeyId: this.user.bundle.signedPreKeyId(),
+            preKeyPublic: Array.from(this.user.bundle.preKeyPublic()!.serialize()),
+            signedPreKeyPublic: Array.from(this.user.bundle.signedPreKeyPublic().serialize()),
+            signedPreKeySignature: Array.from(this.user.bundle.signedPreKeySignature()),
         } 
     }
 
     async sign(data: number[], callParams: CallParams<'data'>): Promise<{ error: string | null; signature: number[] | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.currentUser!.sign(Buffer.from(data)));
+        const [err, result] = await on(this.user!.sign(Buffer.from(data)));
         return {
             error: err ? err.toLocaleString() : err,
             signature: result ? Array.from(result) : [],
@@ -81,12 +83,16 @@ export class SignalService implements SignalDef {
     };
     
     async verify(signature: number[], data: number[], callParams: CallParams<'data' | 'signature'>): Promise<boolean> {
-        return await this.currentUser!.verify(Buffer.from(signature), Buffer.from(data));
+        return await this.user!.verify(Buffer.from(signature), Buffer.from(data));
     };
     
+    async verifyFor(signature: number[], data: number[], address: string) {
+        const is_verify = await this.user!.verifyFor(Buffer.from(data), Buffer.from(signature), StringToProtocolAddress(address));
+        return is_verify ? is_verify : false;
+    }
     async decrypt(data: number[], from: string, callParams: CallParams<'data' | 'from'>):  Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.currentUser!.receive(Buffer.from(data), StringToProtocolAddress(from)));
+        const [err, result] = await on(this.user!.decrypt(Buffer.from(data), StringToProtocolAddress(from)));
         return {
             content: result ? Array.from(result): [],
             error: err ? err.toString() : "",
@@ -96,7 +102,7 @@ export class SignalService implements SignalDef {
 
     async encrypt(data: number[], id: string, callParams: CallParams<'data' | 'id'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.currentUser!.send(Buffer.from(data), StringToProtocolAddress(id)));
+        const [err, result] = await on(this.user!.encrypt(Buffer.from(data), StringToProtocolAddress(id)));
         return {
             content: result ? Array.from(result): [],
             error: err ? err.toString() : "",
@@ -104,17 +110,4 @@ export class SignalService implements SignalDef {
         }
 
     };
-}
-
-function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
-    return callParams.initPeerId === peer.getStatus().peerId;
-}
-
-function ProtocolAddresToString(address: ProtocolAddress) {
-    return `${address.name()}::${address.deviceId()}`
-}
-
-function StringToProtocolAddress(string: string) {
-    const args = string.split("::");
-    return ProtocolAddress.new(args[0], Number(args[1]));
 }

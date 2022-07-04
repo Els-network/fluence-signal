@@ -1,4 +1,5 @@
 import * as SignalClient from '@signalapp/libsignal-client';
+import { hash } from './util';
 
 export type Stores = {address: SignalClient.ProtocolAddress, keys: InMemoryIdentityKeyStore, sessions: InMemorySessionStore, preKeys: InMemoryPreKeyStore, preKeysSigned: InMemorySignedPreKeyStore, bundle: SignalClient.PreKeyBundle};
 
@@ -129,7 +130,7 @@ export class InMemorySenderKeyStore extends SignalClient.SenderKeyStore {
 
 
 export class Signal {
-    private keys;
+    public keys;
     private sessions;
     private preKeys;
     private preKeysSigned;
@@ -160,17 +161,17 @@ export class Signal {
         );
     }
 
-    static async create(name: string, id: number, stores?: Stores) {
-        const address = SignalClient.ProtocolAddress.new(name, id);
+    static async create(id: number, stores?: Stores) {
         const keys = Signal.stores ? Signal.stores.keys : new InMemoryIdentityKeyStore();
         const sessions = Signal.stores ? Signal.stores.sessions : new InMemorySessionStore();
         const preKeys = Signal.stores ? Signal.stores.preKeys : new InMemoryPreKeyStore();
         const preKeysSigned = Signal.stores ? Signal.stores.preKeysSigned : new InMemorySignedPreKeyStore();
-
+        
         const PreKey = SignalClient.PrivateKey.generate();
         const SPreKey = SignalClient.PrivateKey.generate();
-
+        
         const indentityKey = await keys.getIdentityKey();
+        const address = SignalClient.ProtocolAddress.new(hash(indentityKey.serialize().toString()), id);
         const preKeySigned = indentityKey.sign(
             SPreKey.getPublicKey().serialize()
         );
@@ -217,7 +218,7 @@ export class Signal {
 
     static async sync_device() {}; //TODO
 
-    async send(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle?:  SignalClient.PreKeyBundle) {
+    async encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle?:  SignalClient.PreKeyBundle) {
         const session = await this.sessions.getSession(address);
         if(!session) {
             await SignalClient.processPreKeyBundle(preKeyBundle!, address, this.sessions, this.keys);
@@ -241,7 +242,7 @@ export class Signal {
         }
     }
 
-    async receive(msg: Buffer, address: SignalClient.ProtocolAddress) {
+    async decrypt(msg: Buffer, address: SignalClient.ProtocolAddress) {
         const session = await this.sessions.getSession(address);
         if(!session) {
             const message = SignalClient.PreKeySignalMessage.deserialize(msg);
@@ -265,5 +266,9 @@ export class Signal {
 
     async verify(message: Buffer, sig: Buffer) {
         return (await this.keys.getIdentityKey()).getPublicKey().verify(message, sig);
+    }
+
+    async verifyFor(message: Buffer, signature: Buffer, address: SignalClient.ProtocolAddress) {
+        return (await this.keys.getIdentity(address))?.verify(message, signature);
     }
 }

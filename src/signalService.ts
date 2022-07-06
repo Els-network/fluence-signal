@@ -31,8 +31,7 @@ export class SignalService implements SignalDef {
     
     get_identity(callParams: CallParams<null>) {
         return {
-            id: this.id!,
-            address: [ProtocolAddressToString(this.user!.address)],
+            id: ProtocolAddressToString(this.user!.address),
             username: this.username!,
             deviceId: this.user!.bundle.deviceId(),
             registrationId: this.user!.bundle.registrationId(),
@@ -57,9 +56,8 @@ export class SignalService implements SignalDef {
         this.id = hash(await (await identity.keys.getIdentityKey()!).serialize().toString());
         this.user = identity;
         return {
-            id: this.id,
+            id: ProtocolAddressToString(this.user.address),
             username: this.username,
-            address: [ProtocolAddressToString(this.user.address)],
             deviceId: this.user.bundle.deviceId(),
             identityKey: Array.from(this.user.bundle.identityKey().serialize()),
             registrationId: this.user.bundle.registrationId(),
@@ -100,9 +98,9 @@ export class SignalService implements SignalDef {
         }
     }
 
-    async encrypt(data: number[], id: string, callParams: CallParams<'data' | 'id'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
+    async encrypt(data: number[], to: string, callParams: CallParams<'data' | 'to'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.user!.encrypt(Buffer.from(data), StringToProtocolAddress(id)));
+        const [err, result] = await on(this.user!.encrypt(Buffer.from(data), StringToProtocolAddress(to)));
         return {
             content: result ? Array.from(result): [],
             error: err ? err.toString() : "",

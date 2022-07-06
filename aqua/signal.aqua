@@ -1,13 +1,13 @@
 import "@fluencelabs/aqua-lib/builtin.aqua"
 
-export Address, Identity, SignResult, EncryptionResult, DecryptionResult, Signal
+export Id, Identity, SignResult, EncryptionResult, DecryptionResult, Signal
 
 alias Buffer: []u8 
-alias Address: string
+alias Id: string
 
 data Identity:
+    id: Id
     username: string
-    address: []Address
     identityKey: []u8
     preKeyId: ?u8
     preKeyPublic: []u8 
@@ -39,10 +39,10 @@ service Signal("signal"):
 
     sign(data: Buffer) -> SignResult
     verify(signature: Buffer, data: Buffer) -> bool
-    verifyFor(signature: Buffer, data: Buffer, address: Address) -> bool
+    verifyFor(signature: Buffer, data: Buffer, id: Id) -> bool
     
     get_identity() -> Identity
 
-    encrypt(data: Buffer, id: string) -> EncryptionResult
+    encrypt(data: Buffer, to: Id) -> EncryptionResult
 
     decrypt(data: Buffer, from: string) -> DecryptionResult

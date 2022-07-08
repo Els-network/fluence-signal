@@ -2,8 +2,8 @@
   "name": "auth",
   "version": "1.0.0",
   "license": "MIT",
-  "main": "/lib/index.js",
-  "types": "/lib/index.d.ts",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "scripts": {
     "compile:aqua": "npx aqua -i ./aqua/ -o ./src/_aqua",
     "start": "node -r ts-node/register src/index.ts"

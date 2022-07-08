@@ -33,7 +33,6 @@ export class SignalService implements SignalDef {
         return {
             id: ProtocolAddressToString(this.user!.address),
             username: this.username!,
-            deviceId: this.user!.bundle.deviceId(),
             registrationId: this.user!.bundle.registrationId(),
             identityKey: Array.from(this.user!.bundle.identityKey().serialize()),
             preKeyId: this.user!.bundle.preKeyId(),
@@ -63,7 +62,6 @@ export class SignalService implements SignalDef {
         return {
             id: ProtocolAddressToString(this.user.address),
             username: this.username,
-            deviceId: this.user.bundle.deviceId(),
             identityKey: Array.from(this.user.bundle.identityKey().serialize()),
             registrationId: this.user.bundle.registrationId(),
             preKeyId: this.user.bundle.preKeyId(),

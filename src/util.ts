@@ -23,7 +23,7 @@ export function StringToProtocolAddress(string: string) {
             Buffer.from(string, "base64").valueOf().values() // converte the hash to a buffer of number;
         ).map(
             el => el < 100 ? String("0" + el) : String(el)) // get an array of string ["0xx"] || ["xxx"];
-        .join("").slice(0, 11)
+        .join("").slice(0, 9)
     ) // return a number;
 }
 

@@ -31,6 +31,10 @@ data DecryptionResult:
     error: ?string
     content: ?[]u8
 
+data RegisterResult:
+    success: bool
+    error: ?string
+
 service Signal("signal"):
     set_username(username: string)
     get_username() -> string
@@ -39,9 +43,10 @@ service Signal("signal"):
 
     sign(data: Buffer) -> SignResult
     verify(signature: Buffer, data: Buffer) -> bool
-    verifyFor(signature: Buffer, data: Buffer, id: Id) -> bool
+    verify_for(signature: Buffer, data: Buffer, id: Id) -> bool
     
     get_identity() -> Identity
+    register_identity(identity: Identity) -> RegisterResult
 
     encrypt(data: Buffer, to: Id) -> EncryptionResult
 

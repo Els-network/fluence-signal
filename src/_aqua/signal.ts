@@ -22,10 +22,11 @@ export interface SignalDef {
     encrypt: (data: number[], to: string, callParams: CallParams<'data' | 'to'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
     get_identity: (callParams: CallParams<null>) => { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
     get_username: (callParams: CallParams<null>) => string | Promise<string>;
+    register_identity: (identity: { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }, callParams: CallParams<'identity'>) => { error: string | null; success: boolean; } | Promise<{ error: string | null; success: boolean; }>;
     set_username: (username: string, callParams: CallParams<'username'>) => void | Promise<void>;
     sign: (data: number[], callParams: CallParams<'data'>) => { error: string | null; signature: number[] | null; success: boolean; } | Promise<{ error: string | null; signature: number[] | null; success: boolean; }>;
     verify: (signature: number[], data: number[], callParams: CallParams<'signature' | 'data'>) => boolean | Promise<boolean>;
-    verifyFor: (signature: number[], data: number[], id: string, callParams: CallParams<'signature' | 'data' | 'id'>) => boolean | Promise<boolean>;
+    verify_for: (signature: number[], data: number[], id: string, callParams: CallParams<'signature' | 'data' | 'id'>) => boolean | Promise<boolean>;
 }
 export function registerSignal(service: SignalDef): void;
 export function registerSignal(serviceId: string, service: SignalDef): void;
@@ -300,6 +301,93 @@ export function registerSignal(...args: any) {
                     ]
                 }
             },
+            "register_identity" : {
+                "tag" : "arrow",
+                "domain" : {
+                    "tag" : "labeledProduct",
+                    "fields" : {
+                        "identity" : {
+                            "tag" : "struct",
+                            "name" : "Identity",
+                            "fields" : {
+                                "preKeyPublic" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "username" : {
+                                    "tag" : "scalar",
+                                    "name" : "string"
+                                },
+                                "registrationId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "identityKey" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "signedPreKeyId" : {
+                                    "tag" : "scalar",
+                                    "name" : "u8"
+                                },
+                                "preKeyId" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "id" : {
+                                    "tag" : "scalar",
+                                    "name" : "string"
+                                },
+                                "signedPreKeyPublic" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                },
+                                "signedPreKeySignature" : {
+                                    "tag" : "array",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "codomain" : {
+                    "tag" : "unlabeledProduct",
+                    "items" : [
+                        {
+                            "tag" : "struct",
+                            "name" : "RegisterResult",
+                            "fields" : {
+                                "error" : {
+                                    "tag" : "option",
+                                    "type" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    }
+                                },
+                                "success" : {
+                                    "tag" : "scalar",
+                                    "name" : "bool"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
             "set_username" : {
                 "tag" : "arrow",
                 "domain" : {
@@ -393,7 +481,7 @@ export function registerSignal(...args: any) {
                     ]
                 }
             },
-            "verifyFor" : {
+            "verify_for" : {
                 "tag" : "arrow",
                 "domain" : {
                     "tag" : "labeledProduct",

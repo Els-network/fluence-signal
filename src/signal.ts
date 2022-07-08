@@ -1,7 +1,7 @@
 import * as SignalClient from '@signalapp/libsignal-client';
 import { hash } from './util';
 
-export type Stores = {address: SignalClient.ProtocolAddress, keys: InMemoryIdentityKeyStore, sessions: InMemorySessionStore, preKeys: InMemoryPreKeyStore, preKeysSigned: InMemorySignedPreKeyStore, bundle: SignalClient.PreKeyBundle};
+export type Stores = {address: SignalClient.ProtocolAddress, identitykeys: InMemoryIdentityKeyStore, sessions: InMemorySessionStore, preKeys: InMemoryPreKeyStore, preKeysSigned: InMemorySignedPreKeyStore, bundle: SignalClient.PreKeyBundle};
 
 export class InMemorySessionStore extends SignalClient.SessionStore {
     private state = new Map<string, Buffer>();
@@ -130,10 +130,10 @@ export class InMemorySenderKeyStore extends SignalClient.SenderKeyStore {
 
 
 export class Signal {
-    public keys;
-    private sessions;
-    private preKeys;
-    private preKeysSigned;
+    public identityKeys;
+    public sessions;
+    public preKeys;
+    public preKeysSigned;
 
     public keysBundle: undefined | SignalClient.PreKeyBundle;
 
@@ -146,7 +146,7 @@ export class Signal {
     }
 
     private constructor(stores?: Stores) {
-        this.keys = stores ? stores.keys : Signal.stores.keys;
+        this.identityKeys = stores ? stores.identitykeys : Signal.stores.identitykeys;
         this.sessions = stores ? stores.sessions : Signal.stores.sessions;
         this.preKeys = stores ? stores.preKeys : Signal.stores.preKeys;
         this.preKeysSigned = stores ? stores.preKeysSigned : Signal.stores.preKeysSigned;
@@ -162,7 +162,7 @@ export class Signal {
     }
 
     static async create(id: number, stores?: Stores) {
-        const keys = Signal.stores ? Signal.stores.keys : new InMemoryIdentityKeyStore();
+        const identitykeys = Signal.stores ? Signal.stores.identitykeys : new InMemoryIdentityKeyStore();
         const sessions = Signal.stores ? Signal.stores.sessions : new InMemorySessionStore();
         const preKeys = Signal.stores ? Signal.stores.preKeys : new InMemoryPreKeyStore();
         const preKeysSigned = Signal.stores ? Signal.stores.preKeysSigned : new InMemorySignedPreKeyStore();
@@ -170,13 +170,13 @@ export class Signal {
         const PreKey = SignalClient.PrivateKey.generate();
         const SPreKey = SignalClient.PrivateKey.generate();
         
-        const indentityKey = await keys.getIdentityKey();
+        const indentityKey = await identitykeys.getIdentityKey();
         const address = SignalClient.ProtocolAddress.new(hash(indentityKey.serialize().toString()), id);
         const preKeySigned = indentityKey.sign(
             SPreKey.getPublicKey().serialize()
         );
         
-        const registrationId = await keys.getLocalRegistrationId();
+        const registrationId = await identitykeys.getLocalRegistrationId();
         const PreKeyId = 31337;
 	    const SignedPreKeyId = 22;
 
@@ -209,7 +209,7 @@ export class Signal {
 
         preKeysSigned.saveSignedPreKey(SignedPreKeyId, PreKeySignedRecord);
 
-        return new Signal(stores ? stores : {address, keys, sessions, preKeys, preKeysSigned, bundle: keysBundle});
+        return new Signal(stores ? stores : {address, identitykeys, sessions, preKeys, preKeysSigned, bundle: keysBundle});
     }
 
     static async login(stores?: Stores) {
@@ -221,12 +221,12 @@ export class Signal {
     async encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle?:  SignalClient.PreKeyBundle) {
         const session = await this.sessions.getSession(address);
         if(!session) {
-            await SignalClient.processPreKeyBundle(preKeyBundle!, address, this.sessions, this.keys);
+            await SignalClient.processPreKeyBundle(preKeyBundle!, address, this.sessions, this.identityKeys);
             const cipherText = await SignalClient.signalEncrypt(
                 message,
                 address,
                 this.sessions, 
-                this.keys
+                this.identityKeys
             );
             const cipherTextR = SignalClient.PreKeySignalMessage.deserialize(cipherText.serialize());
             return cipherTextR.serialize();
@@ -235,7 +235,7 @@ export class Signal {
                 message,
                 address,
                 this.sessions, 
-                this.keys
+                this.identityKeys
             );
             const cipherTextR = SignalClient.SignalMessage.deserialize(cipherText.serialize());
             return cipherTextR.serialize();
@@ -247,28 +247,32 @@ export class Signal {
         if(!session) {
             const message = SignalClient.PreKeySignalMessage.deserialize(msg);
             const plainText = await SignalClient.signalDecryptPreKey(
-                message as SignalClient.PreKeySignalMessage, address, this.sessions, this.keys, this.preKeys, this.preKeysSigned
+                message as SignalClient.PreKeySignalMessage, address, this.sessions, this.identityKeys, this.preKeys, this.preKeysSigned
             );
             return plainText;
         } else {
             const message = SignalClient.SignalMessage.deserialize(msg);
             const plainText = await SignalClient.signalDecrypt(
-                message as SignalClient.SignalMessage, address, this.sessions, this.keys
+                message as SignalClient.SignalMessage, address, this.sessions, this.identityKeys
             );
             return plainText;
         }
     }
 
     async sign(message: Buffer) {
-        const id = await this.keys.getIdentityKey();
+        const id = await this.identityKeys.getIdentityKey();
         return id.sign(message); 
     }
 
     async verify(message: Buffer, sig: Buffer) {
-        return (await this.keys.getIdentityKey()).getPublicKey().verify(message, sig);
+        return (await this.identityKeys.getIdentityKey()).getPublicKey().verify(message, sig);
     }
 
     async verifyFor(message: Buffer, signature: Buffer, address: SignalClient.ProtocolAddress) {
-        return (await this.keys.getIdentity(address))?.verify(message, signature);
+        return (await this.identityKeys.getIdentity(address))?.verify(message, signature);
+    }
+
+    async register_user(address: SignalClient.ProtocolAddress, key: Buffer) {
+        return await this.identityKeys.saveIdentity(address, SignalClient.PublicKey.deserialize(key));
     }
 }

@@ -44,7 +44,12 @@ export class SignalService implements SignalDef {
         } 
     };
 
-    constructor(peer: FluencePeer, devices?: string[], stores?: Stores) {
+    async register_identity(identity: { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }, callParams: CallParams<"identity">): Promise<{success: boolean, error: string | null}> {
+        const [err, res] = await on(this.user!.register_user(StringToProtocolAddress(identity.id), Buffer.from(identity.identityKey)));
+        return {success: res!, error: err ? err?.toString() : null};
+    }
+    
+    constructor(peer: FluencePeer, stores?: Stores) {
         this.peer = peer;
         if(stores) Signal.setStore(stores);
     }
@@ -53,8 +58,8 @@ export class SignalService implements SignalDef {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not owner");
         this.username = username;
         const identity = await Signal.create(PeerIdToNumber(this.peer.getStatus().peerId!));
-        this.id = hash(await (await identity.keys.getIdentityKey()!).serialize().toString());
         this.user = identity;
+        this.id = ProtocolAddressToString(this.user.address);
         return {
             id: ProtocolAddressToString(this.user.address),
             username: this.username,
@@ -84,7 +89,7 @@ export class SignalService implements SignalDef {
         return await this.user!.verify(Buffer.from(signature), Buffer.from(data));
     };
     
-    async verifyFor(signature: number[], data: number[], address: string) {
+    async verify_for(signature: number[], data: number[], address: string) {
         const is_verify = await this.user!.verifyFor(Buffer.from(data), Buffer.from(signature), StringToProtocolAddress(address));
         return is_verify ? is_verify : false;
     }

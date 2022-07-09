@@ -154,7 +154,7 @@ export class Signal {
         this.address = stores ? stores.address : Signal.stores.address;
     }
 
-    public initLogger(maxLevel: SignalClient.LogLevel, callback: (level: SignalClient.LogLevel, target: string, file: string | null, line: number | null, message: string) => void): void {
+    public static initLogger(maxLevel: SignalClient.LogLevel, callback: (level: SignalClient.LogLevel, target: string, file: string | null, line: number | null, message: string) => void): void {
         SignalClient.initLogger(
             maxLevel,
             callback

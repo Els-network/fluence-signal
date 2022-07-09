@@ -60,7 +60,17 @@ export declare class SignalService implements SignalDef {
         error: string | null;
         success: boolean;
     }>;
-    encrypt(data: number[], to: string, callParams: CallParams<'data' | 'to'>): Promise<{
+    encrypt(data: number[], to: string, identity: {
+        id: string;
+        identityKey: number[];
+        preKeyId: number | null;
+        preKeyPublic: number[];
+        registrationId: number;
+        signedPreKeyId: number;
+        signedPreKeyPublic: number[];
+        signedPreKeySignature: number[];
+        username: string;
+    } | null, callParams: CallParams<'data' | 'to'>): Promise<{
         content: number[] | null;
         error: string | null;
         success: boolean;

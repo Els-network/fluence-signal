@@ -19,7 +19,7 @@ import {
 export interface SignalDef {
     create: (username: string, callParams: CallParams<'username'>) => { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
     decrypt: (data: number[], from: string, callParams: CallParams<'data' | 'from'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
-    encrypt: (data: number[], to: string, callParams: CallParams<'data' | 'to'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
+    encrypt: (data: number[], to: string, identity: { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | null, callParams: CallParams<'data' | 'to' | 'identity'>) => { content: number[] | null; error: string | null; success: boolean; } | Promise<{ content: number[] | null; error: string | null; success: boolean; }>;
     get_identity: (callParams: CallParams<null>) => { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | Promise<{ id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }>;
     get_username: (callParams: CallParams<null>) => string | Promise<string>;
     register_identity: (identity: { id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; }, callParams: CallParams<'identity'>) => { error: string | null; success: boolean; } | Promise<{ error: string | null; success: boolean; }>;
@@ -182,6 +182,66 @@ export function registerSignal(...args: any) {
                         "to" : {
                             "tag" : "scalar",
                             "name" : "string"
+                        },
+                        "identity" : {
+                            "tag" : "option",
+                            "type" : {
+                                "tag" : "struct",
+                                "name" : "Identity",
+                                "fields" : {
+                                    "preKeyPublic" : {
+                                        "tag" : "array",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    },
+                                    "username" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    },
+                                    "registrationId" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    },
+                                    "identityKey" : {
+                                        "tag" : "array",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    },
+                                    "signedPreKeyId" : {
+                                        "tag" : "scalar",
+                                        "name" : "u8"
+                                    },
+                                    "preKeyId" : {
+                                        "tag" : "option",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    },
+                                    "id" : {
+                                        "tag" : "scalar",
+                                        "name" : "string"
+                                    },
+                                    "signedPreKeyPublic" : {
+                                        "tag" : "array",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    },
+                                    "signedPreKeySignature" : {
+                                        "tag" : "array",
+                                        "type" : {
+                                            "tag" : "scalar",
+                                            "name" : "u8"
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 },

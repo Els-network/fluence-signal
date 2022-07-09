@@ -39,7 +39,17 @@ export interface SignalDef {
         error: string | null;
         success: boolean;
     }>;
-    encrypt: (data: number[], to: string, callParams: CallParams<'data' | 'to'>) => {
+    encrypt: (data: number[], to: string, identity: {
+        id: string;
+        identityKey: number[];
+        preKeyId: number | null;
+        preKeyPublic: number[];
+        registrationId: number;
+        signedPreKeyId: number;
+        signedPreKeyPublic: number[];
+        signedPreKeySignature: number[];
+        username: string;
+    } | null, callParams: CallParams<'data' | 'to' | 'identity'>) => {
         content: number[] | null;
         error: string | null;
         success: boolean;

@@ -56,7 +56,7 @@ export declare class Signal {
     static create(id: number, stores?: Stores): Promise<Signal>;
     static login(stores?: Stores): Promise<Signal>;
     static sync_device(): Promise<void>;
-    encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle?: SignalClient.PreKeyBundle): Promise<Buffer>;
+    encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle: SignalClient.PreKeyBundle | null): Promise<Buffer>;
     decrypt(msg: Buffer, address: SignalClient.ProtocolAddress): Promise<Buffer>;
     sign(message: Buffer): Promise<Buffer>;
     verify(message: Buffer, sig: Buffer): Promise<boolean>;

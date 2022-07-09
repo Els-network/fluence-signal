@@ -1,6 +1,7 @@
 import { CallParams, FluencePeer } from '@fluencelabs/fluence';
 import { SignalDef } from './_aqua/signal';
 import { Signal, Stores } from './signal';
+import { PreKeyBundle, PublicKey } from '@signalapp/libsignal-client';
 import on from "await-handler";
 
 import { hash, PeerIdToNumber, ProtocolAddressToString, StringToProtocolAddress } from './util';
@@ -101,9 +102,23 @@ export class SignalService implements SignalDef {
         }
     }
 
-    async encrypt(data: number[], to: string, callParams: CallParams<'data' | 'to'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
+    async encrypt(data: number[], to: string, identity:{ id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | null, callParams: CallParams<'data' | 'to'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
-        const [err, result] = await on(this.user!.encrypt(Buffer.from(data), StringToProtocolAddress(to)));
+        const [err, result] = await on(this.user!.encrypt(
+            Buffer.from(data),
+            StringToProtocolAddress(to),
+            identity ? 
+            PreKeyBundle.new(
+                identity.registrationId,
+                StringToProtocolAddress(identity.id).deviceId(),
+                identity.preKeyId,
+                PublicKey.deserialize(Buffer.from(identity.preKeyPublic)),
+                identity.signedPreKeyId,
+                PublicKey.deserialize(Buffer.from(identity.signedPreKeyPublic)),
+                Buffer.from(identity.signedPreKeySignature),
+                PublicKey.deserialize(Buffer.from(identity.identityKey))
+            ) : null
+        ));
         return {
             content: result ? Array.from(result): [],
             error: err ? err.toString() : "",

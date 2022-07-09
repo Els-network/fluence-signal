@@ -13,8 +13,8 @@ data Identity:
     preKeyPublic: []u8 
     registrationId: u8 
     signedPreKeyId: u8 
-    signedPreKeyPublic: []u8 
     signedPreKeySignature: []u8 
+    signedPreKeyPublic: []u8 
 
 data SignResult:
     success: bool
@@ -48,6 +48,6 @@ service Signal("signal"):
     get_identity() -> Identity
     register_identity(identity: Identity) -> RegisterResult
 
-    encrypt(data: Buffer, to: Id) -> EncryptionResult
+    encrypt(data: Buffer, to: Id, identity: ?Identity) -> EncryptionResult
 
-    decrypt(data: Buffer, from: string) -> DecryptionResult
+    decrypt(data: Buffer, from: Id) -> DecryptionResult

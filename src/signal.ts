@@ -218,7 +218,7 @@ export class Signal {
 
     static async sync_device() {}; //TODO
 
-    async encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle?:  SignalClient.PreKeyBundle) {
+    async encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle:  SignalClient.PreKeyBundle | null) {
         const session = await this.sessions.getSession(address);
         if(!session) {
             await SignalClient.processPreKeyBundle(preKeyBundle!, address, this.sessions, this.identityKeys);

@@ -14,7 +14,6 @@ export declare class SignalService implements SignalDef {
     get_identity(callParams: CallParams<null>): {
         id: string;
         username: string;
-        deviceId: number;
         registrationId: number;
         identityKey: number[];
         preKeyId: number | null;
@@ -41,7 +40,6 @@ export declare class SignalService implements SignalDef {
     create(username: string, callParams: CallParams<'username'>): Promise<{
         id: string;
         username: string;
-        deviceId: number;
         identityKey: number[];
         registrationId: number;
         preKeyId: number | null;

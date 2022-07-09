@@ -52,7 +52,7 @@ export declare class Signal {
     private static stores;
     static setStore(store: Stores): void;
     private constructor();
-    initLogger(maxLevel: SignalClient.LogLevel, callback: (level: SignalClient.LogLevel, target: string, file: string | null, line: number | null, message: string) => void): void;
+    static initLogger(maxLevel: SignalClient.LogLevel, callback: (level: SignalClient.LogLevel, target: string, file: string | null, line: number | null, message: string) => void): void;
     static create(id: number, stores?: Stores): Promise<Signal>;
     static login(stores?: Stores): Promise<Signal>;
     static sync_device(): Promise<void>;

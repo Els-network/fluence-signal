@@ -80,7 +80,7 @@
     "@chainsafe/libp2p-noise" "^4.1.1"
     "@fluencelabs/avm" "0.24.2"
     "@fluencelabs/marine-js" "0.2.5"
-    async "3.2.0"
+    async "3.2.2"
     browser-or-node "^2.0.0"
     bs58 "4.0.1"
     buffer "^6.0.3"
@@ -174,7 +174,7 @@
   resolved "https://registry.yarnpkg.com/@motrix/nat-api/-/nat-api-0.3.2.tgz#a1164e25b1401279e2170666b0df3455812e7e1e"
   integrity sha512-T3LSHnEUULbSU1o1zCZZ1ul8l8Jm98f0fz/0BeF7DhNvrV63YllLCD4vUR9hFZWu/+WTIVPnbH8dBK5Ckuveuw==
   dependencies:
-    async "^3.2.0"
+    async "^3.2.2"
     debug "^4.3.1"
     default-gateway "^6.0.3"
     request "^2.88.2"
@@ -562,8 +562,8 @@ assert-plus@1.0.0, assert-plus@^1.0.0:
   resolved "https://registry.yarnpkg.com/assert-plus/-/assert-plus-1.0.0.tgz#f12e0f3c5d77b0b1cdd9146942e4e96c1e4dd525"
   integrity sha512-NfJ4UzBCcQGLDlQq7nHxH+tv3kyZ0hHQqF5BO6J7tNJeP5do1llPr8dZ8zHonfhAu0PHAdMkSo+8o0wxg9lZWw==
 
-async@3.2.0:
-  version "3.2.0"
+async@3.2.2:
+  version "3.2.2"
   resolved "https://registry.yarnpkg.com/async/-/async-3.2.0.tgz#b3a2685c5ebb641d3de02d161002c60fc9f85720"
   integrity sha512-TR2mEZFVOj2pLStYxLht7TyfuRzaydfpxr3k9RpHIzMgw7A64dzsdqCxH1WJyQdoe8T10nDXd9wnEigmiuHIZw==
 
@@ -572,7 +572,7 @@ async@3.2.3:
   resolved "https://registry.yarnpkg.com/async/-/async-3.2.3.tgz#ac53dafd3f4720ee9e8a160628f18ea91df196c9"
   integrity sha512-spZRyzKL5l5BZQrr/6m/SqFdBN0q3OCI0f9rjfBzCMBIP4p75P620rR3gTmaksNOhmzgdxcaxdNfMy6anrbM0g==
 
-async@^3.2.0:
+async@^3.2.4:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/async/-/async-3.2.4.tgz#2d22e00f8cddeb5fde5dd33522b56d1cf569a81c"
   integrity sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==
@@ -582,7 +582,7 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
-await-handler-ts@await-handler-ts:
+await-handler-ts@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/await-handler-ts/-/await-handler-ts-2.0.2.tgz#4960e873c590a8c2de567cf07dd89b346fb61a89"
   integrity sha512-48RE1Zyl0Z6o4C4K/SopbyDycYloiGGsH3CtulKO4Ejv7tw4ruHbzPnxdmBkHLmUycy/VjszgdJCrAbNc0NajQ==

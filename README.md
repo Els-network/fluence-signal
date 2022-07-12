@@ -105,7 +105,7 @@ More complexe scenario send with other services:
 -- Messager service has to methode: send | receive
 -- It is use to manage message sending and receiving over the network
 
--- Util.include_true() check for a given array if it include a true; In that case if a device receive the message, it return true; So if result don't include true, it's mean that no device received the message because of an error or the remote peer is offline;
+-- Util.include_true() check for a given array if it include true; 
 
 -- Swarm is a service that run on a distant peer. It's in charge of keeping the messages receive by a peer during the time it was offline. Swarm.transfer is use to send a message to the swarm and then the swarm will send the message to the remote peer when it will back online.
 

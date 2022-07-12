@@ -12,7 +12,7 @@ Main site: **https://fluence.network/**
 **TS**
 ```ts
 const peer = new FluencePeer();
-const signal = new Signal(peer, stores?); // stores is by default in memory. You could make your own implementation see the typescript stores interfaces;
+const signal = new SignalService(peer, stores?); // stores is by default in memory. You could make your own implementation see the typescript stores interfaces;
 registerSignal(peer, signal);
 // And now the service is running on your peer !
 ```

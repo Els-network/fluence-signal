@@ -2,9 +2,9 @@ import { CallParams, FluencePeer } from '@fluencelabs/fluence';
 import { SignalDef } from './_aqua/signal';
 import { Signal, Stores } from './signal';
 import { PreKeyBundle, PublicKey } from '@signalapp/libsignal-client';
-import on from "await-handler";
+import on from "await-handler-ts";
 
-import { hash, PeerIdToNumber, ProtocolAddressToString, StringToProtocolAddress } from './util';
+import { PeerIdToNumber, ProtocolAddressToString, StringToProtocolAddress } from './util';
 
 function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
     return callParams.initPeerId === peer.getStatus().peerId;

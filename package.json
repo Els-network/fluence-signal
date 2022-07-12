@@ -1,11 +1,8 @@
 {
-  "name": "@els/signal-service",
-  "version": "1.0.0",
+  "name": "@els/fluence-signal-service",
+  "version": "1.1.0",
   "license": "MIT",
-  "author": {
-    "name": "IdkDemo",
-    "url": "https://github.com/idkDemo"
-  },
+  "author": "IdkDemo (https://github.com/idkDemo)",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "engines": {
@@ -16,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Els-network/fluence-signal"
+    "url": "git+https://github.com/Els-network/fluence-signal.git"
   },
   "scripts": {
     "compile:aqua": "npx aqua -i ./aqua/ -o ./src/_aqua",
@@ -34,5 +31,18 @@
     "ts-node": "^10.8.1",
     "typescript": "^4.7.4"
   },
-  "keywords": ["fluence", "signal", "libsignal", "fluence-service"]
+  "keywords": [
+    "fluence",
+    "signal",
+    "libsignal",
+    "fluence-service"
+  ],
+  "description": "Fluence is a peer-to-peer application platform which allows the creation of applications free of proprietary cloud providers or centralized APIs. Fluence provides a peer-to-peer development stack so that you can program p2p applications, workflows, and compose services, APIs without relying on centralized intermediaries. The Fluence stack is 100% open source and maintained and governed by a community of developers. _https://doc.fluence.dev/marine-book/_",
+  "bugs": {
+    "url": "https://github.com/Els-network/fluence-signal/issues"
+  },
+  "homepage": "https://github.com/Els-network/fluence-signal#readme",
+  "directories": {
+    "lib": "lib"
+  }
 }

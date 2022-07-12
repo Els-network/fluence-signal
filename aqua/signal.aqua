@@ -2,9 +2,11 @@ import "@fluencelabs/aqua-lib/builtin.aqua"
 
 export Id, Identity, SignResult, EncryptionResult, DecryptionResult, Signal
 
+-- basic alias
 alias Buffer: []u8 
 alias Id: string
 
+-- represent an identity used for encryption, decryption, and identity verification
 data Identity:
     id: Id
     username: string
@@ -51,3 +53,7 @@ service Signal("signal"):
     encrypt(data: Buffer, to: Id, identity: ?Identity) -> EncryptionResult
 
     decrypt(data: Buffer, from: Id) -> DecryptionResult
+
+-- Could be use to generate an identity; Prefere using the Account service of the Els protocol for that purpose
+func createIdentity() -> Identity:
+    <- Signal.create(INIT_PEER_ID)

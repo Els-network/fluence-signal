@@ -3,6 +3,10 @@ import { hash } from './util';
 
 export type Stores = {address: SignalClient.ProtocolAddress, identitykeys: InMemoryIdentityKeyStore, sessions: InMemorySessionStore, preKeys: InMemoryPreKeyStore, preKeysSigned: InMemorySignedPreKeyStore, bundle: SignalClient.PreKeyBundle};
 
+/**
+ * Stores sessions in memory by default;
+ * @see https://signal.org/docs/ for more information
+ */
 export class InMemorySessionStore extends SignalClient.SessionStore {
     private state = new Map<string, Buffer>();
     async saveSession(name: SignalClient.ProtocolAddress, record: SignalClient.SessionRecord): Promise<void> {
@@ -32,6 +36,10 @@ export class InMemorySessionStore extends SignalClient.SessionStore {
     }
 }
 
+/**
+ * Stores identities in memory by default;
+ * @see https://signal.org/docs/ for more information
+ */
 class InMemoryIdentityKeyStore extends SignalClient.IdentityKeyStore {
     private idKeys = new Map();
     private localRegistrationId: number;
@@ -82,6 +90,10 @@ class InMemoryIdentityKeyStore extends SignalClient.IdentityKeyStore {
     }
 }
 
+/**
+ * Stores Prekeys in memory by default;
+ * @see https://signal.org/docs/ for more information
+ */
 export class InMemoryPreKeyStore extends SignalClient.PreKeyStore {
     private state = new Map();
     async savePreKey(id: number, record: SignalClient.PreKeyRecord): Promise<void> {
@@ -96,6 +108,10 @@ export class InMemoryPreKeyStore extends SignalClient.PreKeyStore {
     }
 }
 
+/**
+ * Stores Signed Prekeys in memory by default;
+ * @see https://signal.org/docs/ for more information
+ */
 class InMemorySignedPreKeyStore extends SignalClient.SignedPreKeyStore {
     private state = new Map();
     async saveSignedPreKey(
@@ -112,6 +128,12 @@ class InMemorySignedPreKeyStore extends SignalClient.SignedPreKeyStore {
   }
   
 
+  /**
+ * Stores sender keys in memory by default; Used for groups in signal;
+ * It is not used in this version;
+ * @TODO implement groups;
+ * @see https://signal.org/docs/ for more information
+ */
 export class InMemorySenderKeyStore extends SignalClient.SenderKeyStore {
     private state = new Map();
     async saveSenderKey(sender: SignalClient.ProtocolAddress, distributionId: string, record: SignalClient.SenderKeyRecord): Promise<void> {
@@ -130,17 +152,16 @@ export class InMemorySenderKeyStore extends SignalClient.SenderKeyStore {
 
 
 export class Signal {
-    public identityKeys;
-    public sessions;
-    public preKeys;
-    public preKeysSigned;
+    public identityKeys; // identity keys store
+    public sessions; // sessions store
+    public preKeys; // pre keys store
+    public preKeysSigned; // pre keys signed store
 
-    public keysBundle: undefined | SignalClient.PreKeyBundle;
 
-    public bundle: SignalClient.PreKeyBundle
-    public address: SignalClient.ProtocolAddress;
+    public bundle: SignalClient.PreKeyBundle // this bundle is send to other peer publicly. It containe all the information require to contact this peer, and verify it's identity see: https://signal.org/docs/
+    public address: SignalClient.ProtocolAddress; // address is use by signal as an that represent the identity;
     
-    private static stores: Stores;
+    private static stores: Stores; // stores defined ahead; 
     static setStore(store: Stores): void {
         Signal.stores = store;
     }
@@ -154,6 +175,11 @@ export class Signal {
         this.address = stores ? stores.address : Signal.stores.address;
     }
 
+    /**
+     * Initialize the signal logger.
+     * @param maxLevel 
+     * @param callback 
+     */
     public static initLogger(maxLevel: SignalClient.LogLevel, callback: (level: SignalClient.LogLevel, target: string, file: string | null, line: number | null, message: string) => void): void {
         SignalClient.initLogger(
             maxLevel,
@@ -161,6 +187,12 @@ export class Signal {
         );
     }
 
+    /**
+     * Create a new identity;
+     * @param id device id;
+     * @param stores stores defined like ahead
+     * @returns Signal;
+     */
     static async create(id: number, stores?: Stores) {
         const identitykeys = Signal.stores ? Signal.stores.identitykeys : new InMemoryIdentityKeyStore();
         const sessions = Signal.stores ? Signal.stores.sessions : new InMemorySessionStore();
@@ -218,60 +250,100 @@ export class Signal {
 
     static async sync_device() {}; //TODO
 
+    /**
+     * Encrypt a message using libsignal
+     * @param message Buffer - the message to encrypt;
+     * @param address The address of the identity
+     * @param preKeyBundle optional pre-key bundle to etablished a new session
+     * @returns Buffer containing the encrypted message
+     */
     async encrypt(message: Buffer, address: SignalClient.ProtocolAddress, preKeyBundle:  SignalClient.PreKeyBundle | null) {
-        const session = await this.sessions.getSession(address);
+        const session = await this.sessions.getSession(address); // retreive the session with the peer;
         if(!session) {
-            await SignalClient.processPreKeyBundle(preKeyBundle!, address, this.sessions, this.identityKeys);
+            // start a new session if no session is find;
+            await SignalClient.processPreKeyBundle(preKeyBundle!, address, this.sessions, this.identityKeys); // get remote peer identity information
             const cipherText = await SignalClient.signalEncrypt(
                 message,
                 address,
-                this.sessions, 
-                this.identityKeys
+                this.sessions, // store to put the session on; 
+                this.identityKeys // store to put the remote peer identity information
             );
-            const cipherTextR = SignalClient.PreKeySignalMessage.deserialize(cipherText.serialize());
-            return cipherTextR.serialize();
+            const cipherTextR = SignalClient.PreKeySignalMessage.deserialize(cipherText.serialize()); // get a new PreKeySignalMessage based on the cipher text generate ahead; Require to etablish a new session with a remote peer;
+            return cipherTextR.serialize(); // Serialize the PreKeySignalMessage to buffer in order to send;
         } else {
+            // if a session is already established;
             const cipherText = await SignalClient.signalEncrypt(
                 message,
                 address,
-                this.sessions, 
-                this.identityKeys
+                this.sessions, // store to retrieve the session on; 
+                this.identityKeys// store to retreive the remote peer identity information
             );
-            const cipherTextR = SignalClient.SignalMessage.deserialize(cipherText.serialize());
-            return cipherTextR.serialize();
+            const cipherTextR = SignalClient.SignalMessage.deserialize(cipherText.serialize()); // create a signal message based on the cipher text;
+            return cipherTextR.serialize(); // Serialize the signal message to buffer in order to send;
         }
     }
 
+    /**
+     * Decrypt a message using libsignal;
+     * @param msg message received
+     * @param address address of the sender
+     * @returns 
+     */
     async decrypt(msg: Buffer, address: SignalClient.ProtocolAddress) {
         const session = await this.sessions.getSession(address);
         if(!session) {
-            const message = SignalClient.PreKeySignalMessage.deserialize(msg);
+            // if not session is established;
+            const message = SignalClient.PreKeySignalMessage.deserialize(msg); // deserialize the message as a PreKeySignalMessage from the serialized message
             const plainText = await SignalClient.signalDecryptPreKey(
                 message as SignalClient.PreKeySignalMessage, address, this.sessions, this.identityKeys, this.preKeys, this.preKeysSigned
-            );
-            return plainText;
+            ); // decrypt it;
+            return plainText; //  return decipher text
         } else {
-            const message = SignalClient.SignalMessage.deserialize(msg);
+            const message = SignalClient.SignalMessage.deserialize(msg); // deserialize the message as a SignalMessage
             const plainText = await SignalClient.signalDecrypt(
                 message as SignalClient.SignalMessage, address, this.sessions, this.identityKeys
             );
-            return plainText;
+            return plainText; // return decipher text
         }
     }
 
+    /**
+     * Sign a message using the identity keys
+     * @param message to sign
+     * @returns Buffer signed
+     */
     async sign(message: Buffer) {
         const id = await this.identityKeys.getIdentityKey();
         return id.sign(message); 
     }
 
+    /**
+     * Verify the signature using the identity keys
+     * @param message plain text message
+     * @param sig signature of the message
+     * @returns 
+     */
     async verify(message: Buffer, sig: Buffer) {
         return (await this.identityKeys.getIdentityKey()).getPublicKey().verify(message, sig);
     }
 
+    /**
+     * Verify a signature for a trust remote peer;
+     * @param message plain text
+     * @param signature signature
+     * @param address address of the remote peer;
+     * @returns boolean
+     */
     async verifyFor(message: Buffer, signature: Buffer, address: SignalClient.ProtocolAddress) {
         return (await this.identityKeys.getIdentity(address))?.verify(message, signature);
     }
 
+    /**
+     * Register a trust remote peer identity;
+     * @param address of the remote peer;
+     * @param key public key of the remote peer;
+     * @returns void
+     */
     async register_user(address: SignalClient.ProtocolAddress, key: Buffer) {
         return await this.identityKeys.saveIdentity(address, SignalClient.PublicKey.deserialize(key));
     }

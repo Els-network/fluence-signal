@@ -1,25 +1,26 @@
 {
-  "name": "auth",
+  "name": "@els/signal-service",
+  "author": {"name": "IdkDemo"},
   "version": "1.0.0",
+  "private": false,
   "license": "MIT",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
     "compile:aqua": "npx aqua -i ./aqua/ -o ./src/_aqua",
-    "start": "node -r ts-node/register src/index.ts"
+    "build": "tsc"
   },
   "dependencies": {
     "@fluencelabs/fluence": "^0.23.0",
     "@fluencelabs/fluence-network-environment": "^1.0.13",
     "@signalapp/libsignal-client": "^0.18.0",
-    "await-handler": "https://github.com/Els-network/await-handler-ts",
-    "nanoid": "^4.0.0"
+    "await-handler": "https://github.com/Els-network/await-handler-ts"
   },
   "devDependencies": {
     "@fluencelabs/aqua": "^0.7.3-318",
     "@fluencelabs/aqua-lib": "^0.5.1",
-    "assert": "^2.0.0",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.4"
-  }
+  },
+  "keywords": ["fluence", "signal", "libsignal", "fluence-service"]
 }

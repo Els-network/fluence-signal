@@ -15,9 +15,9 @@ function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
  */
 export class SignalService implements SignalDef {
 
-    public user: Signal | undefined;
-    public username: string | undefined;
-    public id: string | undefined; 
+    public user: Signal | undefined; // current user login;
+    public username: string | undefined; // current username
+    public id: string | undefined;  // current id (called address with signal);
     
     public peer: FluencePeer;
 
@@ -32,7 +32,7 @@ export class SignalService implements SignalDef {
     
     get_identity(callParams: CallParams<null>) {
         return {
-            id: ProtocolAddressToString(this.user!.address),
+            id: ProtocolAddressToString(this.user!.address), // turn signal address to string
             username: this.username!,
             registrationId: this.user!.bundle.registrationId(),
             identityKey: Array.from(this.user!.bundle.identityKey().serialize()),
@@ -59,20 +59,25 @@ export class SignalService implements SignalDef {
         this.username = username;
         const identity = await Signal.create(PeerIdToNumber(this.peer.getStatus().peerId!));
         this.user = identity;
-        this.id = ProtocolAddressToString(this.user.address);
+        this.id = ProtocolAddressToString(this.user.address); // turn signal address to string
         return {
-            id: ProtocolAddressToString(this.user.address),
+            id: ProtocolAddressToString(this.user.address), // turn signal address to string
             username: this.username,
-            identityKey: Array.from(this.user.bundle.identityKey().serialize()),
+            identityKey: Array.from(this.user.bundle.identityKey().serialize()), // create a Uint8Array from identity key
             registrationId: this.user.bundle.registrationId(),
             preKeyId: this.user.bundle.preKeyId(),
             signedPreKeyId: this.user.bundle.signedPreKeyId(),
-            preKeyPublic: Array.from(this.user.bundle.preKeyPublic()!.serialize()),
-            signedPreKeyPublic: Array.from(this.user.bundle.signedPreKeyPublic().serialize()),
+            preKeyPublic: Array.from(this.user.bundle.preKeyPublic()!.serialize()), // create a Uint8Array from the prekeys
+            signedPreKeyPublic: Array.from(this.user.bundle.signedPreKeyPublic().serialize()), // create a Uint8Array from the prekeys signed
             signedPreKeySignature: Array.from(this.user.bundle.signedPreKeySignature()),
         } 
     }
 
+    /**
+     * See Signal Sign methode in the signal.ts file;
+     * @param data to sign
+     * @param callParams fluence callParameters;
+     */
     async sign(data: number[], callParams: CallParams<'data'>): Promise<{ error: string | null; signature: number[] | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
         const [err, result] = await on(this.user!.sign(Buffer.from(data)));
@@ -83,15 +88,25 @@ export class SignalService implements SignalDef {
         }
 
     };
-    
+
+    /**
+     * See Signal Verify methode in the signal.ts file;
+     */
     async verify(signature: number[], data: number[], callParams: CallParams<'data' | 'signature'>): Promise<boolean> {
         return await this.user!.verify(Buffer.from(signature), Buffer.from(data));
     };
-    
+
+    /**
+     * See Signal Verify For methode in the signal.ts file;
+     */
     async verify_for(signature: number[], data: number[], address: string) {
         const is_verify = await this.user!.verifyFor(Buffer.from(data), Buffer.from(signature), StringToProtocolAddress(address));
         return is_verify ? is_verify : false;
     }
+
+    /**
+     * See Signal decrypt methode in the signal.ts file;
+     */
     async decrypt(data: number[], from: string, callParams: CallParams<'data' | 'from'>):  Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
         const [err, result] = await on(this.user!.decrypt(Buffer.from(data), StringToProtocolAddress(from)));
@@ -102,6 +117,9 @@ export class SignalService implements SignalDef {
         }
     }
 
+    /**
+     * See Signal Encrypt methode in the signal.ts file;
+     */
     async encrypt(data: number[], to: string, identity:{ id: string; identityKey: number[]; preKeyId: number | null; preKeyPublic: number[]; registrationId: number; signedPreKeyId: number; signedPreKeyPublic: number[]; signedPreKeySignature: number[]; username: string; } | null, callParams: CallParams<'data' | 'to'>): Promise<{ content: number[] | null; error: string | null; success: boolean; }> {
         if(!onlyOwner(this.peer, callParams)) throw new Error("Not Owner");
         const [err, result] = await on(this.user!.encrypt(

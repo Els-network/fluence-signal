@@ -6,7 +6,7 @@ import on from "await-handler-ts";
 
 import { PeerIdToNumber, ProtocolAddressToString, StringToProtocolAddress } from './util';
 
-function onlyOwner(peer: FluencePeer, callParams: CallParams<null>) {
+function onlyOwner(peer: FluencePeer, callParams: any) {
     return callParams.initPeerId === peer.getStatus().peerId;
 }
 

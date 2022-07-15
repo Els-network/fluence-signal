@@ -48,18 +48,35 @@ export declare class SignalService implements SignalDef {
         signedPreKeyPublic: number[];
         signedPreKeySignature: number[];
     }>;
+    /**
+     * See Signal Sign methode in the signal.ts file;
+     * @param data to sign
+     * @param callParams fluence callParameters;
+     */
     sign(data: number[], callParams: CallParams<'data'>): Promise<{
         error: string | null;
         signature: number[] | null;
         success: boolean;
     }>;
+    /**
+     * See Signal Verify methode in the signal.ts file;
+     */
     verify(signature: number[], data: number[], callParams: CallParams<'data' | 'signature'>): Promise<boolean>;
+    /**
+     * See Signal Verify For methode in the signal.ts file;
+     */
     verify_for(signature: number[], data: number[], address: string): Promise<boolean>;
+    /**
+     * See Signal decrypt methode in the signal.ts file;
+     */
     decrypt(data: number[], from: string, callParams: CallParams<'data' | 'from'>): Promise<{
         content: number[] | null;
         error: string | null;
         success: boolean;
     }>;
+    /**
+     * See Signal Encrypt methode in the signal.ts file;
+     */
     encrypt(data: number[], to: string, identity: {
         id: string;
         identityKey: number[];
